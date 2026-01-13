@@ -21,3 +21,15 @@ export const getWords = asyncHandler(async (_req: Request, res: Response) => {
     data,
   });
 });
+
+export const getRandomWord = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const count = await Word.countDocuments();
+    const random = Math.floor(Math.random() * count);
+    const word = await Word.findOne().skip(random);
+
+    res.json({
+      data: word,
+    });
+  }
+);
