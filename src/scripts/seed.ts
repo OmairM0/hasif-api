@@ -8,8 +8,8 @@ import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
-import wordsModel from "../modules/words/words.model";
-import { WordEntity, WordDTO } from "../modules/words/words.types";
+import wordsModel from "../modules/word/word.model";
+import { WordEntity, WordDTO } from "../modules/word/word.types";
 
 async function seed() {
   dotenv.config();

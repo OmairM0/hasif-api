@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { WordEntity } from "./words.types";
+import { WordEntity } from "./word.types";
 
 export interface WordDocument extends WordEntity, Document {}
 

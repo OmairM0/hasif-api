@@ -3,6 +3,7 @@
  * (must match frontend IWord)
  */
 export interface WordDTO {
+  id: string;
   word: string;
   diacritic: string;
   meaning: string;
