@@ -4,6 +4,7 @@ import cors from "cors";
 import connectDB from "./config/db";
 import wordsRoutes from "./modules/word/word.routes";
 import usersRoutes from "./modules/user/user.routes";
+import authRoutes from "./modules/auth/auth.routes";
 import errorMiddleware from "./middlewares/error";
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(cors({ origin: "*" }));
 
 app.use(express.json());
 
+app.use("/api/auth", authRoutes);
 app.use("/api/words", wordsRoutes);
 app.use("/api/users", usersRoutes);
 

@@ -41,6 +41,23 @@ export const getWord = asyncHandler(async (req: Request, res: Response) => {
 
   res.json({ word });
 });
+export const createWord = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400).json({ message: "Invalid word id" });
+    return;
+  }
+
+  const word = await Word.findById(id);
+
+  if (!word) {
+    res.status(404).json({ message: "Word not found" });
+    return;
+  }
+
+  res.json({ word });
+});
 
 export const getRandomWord = asyncHandler(
   async (_req: Request, res: Response) => {
