@@ -40,7 +40,7 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
   });
 
   if (userExists) {
-    res.status(400);
+    res.status(409);
     throw new Error("Email or username already exists");
   }
 

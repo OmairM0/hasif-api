@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHandler";
-import User from "../user/user.model";
 import { loginSchema } from "./auth.validation";
 import { loginService } from "./auth.services";
 

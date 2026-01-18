@@ -10,7 +10,7 @@ export interface WordDTO {
   explanation: string;
   example: string;
   category: string;
-  rarity: number;
+  // rarity: number;
 }
 
 /**

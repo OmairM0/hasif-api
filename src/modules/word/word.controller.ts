@@ -3,6 +3,7 @@ import Word from "./word.model";
 import asyncHandler from "../../utils/asyncHandler";
 import { WordDTO } from "./word.types";
 import mongoose from "mongoose";
+import { createWordSchema } from "./word.validation";
 
 export const getWords = asyncHandler(async (_req: Request, res: Response) => {
   const words = await Word.find({ isApproved: true });
@@ -15,7 +16,7 @@ export const getWords = asyncHandler(async (_req: Request, res: Response) => {
     explanation: w.explanation,
     example: w.example,
     category: w.category,
-    rarity: w.rarity,
+    // rarity: w.rarity,
   }));
 
   res.json({
@@ -41,22 +42,23 @@ export const getWord = asyncHandler(async (req: Request, res: Response) => {
 
   res.json({ word });
 });
+
 export const createWord = asyncHandler(async (req: Request, res: Response) => {
-  const id = req.params.id as string;
+  const validatedData = createWordSchema.parse(req.body);
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(400).json({ message: "Invalid word id" });
-    return;
+  // check if word exist
+  const wordExists = await Word.findOne({ word: validatedData.word });
+  if (wordExists) {
+    res.status(409);
+    throw new Error("Word already exists");
   }
 
-  const word = await Word.findById(id);
+  const createdWord = await Word.create({
+    ...validatedData,
+    createdBy: req.user?.id,
+  });
 
-  if (!word) {
-    res.status(404).json({ message: "Word not found" });
-    return;
-  }
-
-  res.json({ word });
+  res.json({ success: true, data: { word: createdWord } });
 });
 
 export const getRandomWord = asyncHandler(
