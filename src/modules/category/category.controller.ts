@@ -3,6 +3,7 @@ import asyncHandler from "../../utils/asyncHandler";
 import mongoose from "mongoose";
 import { createCategorySchema } from "./category.validation";
 import categoryModel from "./category.model";
+import { makeSlug } from "../../utils/helpers";
 
 export const getCategories = asyncHandler(
   async (_req: Request, res: Response) => {
@@ -33,25 +34,28 @@ export const getCategory = asyncHandler(async (req: Request, res: Response) => {
 
   res.json({
     success: true,
-    category,
+    data: category,
   });
 });
 
 export const createCategory = asyncHandler(
   async (req: Request, res: Response) => {
     const validatedData = createCategorySchema.parse(req.body);
-
+    const slug = makeSlug(validatedData.name);
     // check if word exist
     const categoryExists = await categoryModel.findOne({
-      $or: [{ name: validatedData.name }, { slug: validatedData.slug }],
+      $or: [{ name: validatedData.name }, { slug }],
     });
     if (categoryExists) {
       res.status(409);
       throw new Error("Category already exists");
     }
 
-    const createdCategory = await categoryModel.create(validatedData);
+    const createdCategory = await categoryModel.create({
+      ...validatedData,
+      slug,
+    });
 
-    res.json({ success: true, data: { category: createdCategory } });
+    res.json({ success: true, data: createdCategory });
   }
 );

@@ -17,7 +17,22 @@ const UserSchama = new Schema<UserDocument>(
     password: { type: String, required: true, minlength: 6 },
     role: { type: String, enum: ["admin", "user"], default: "user" },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform: (doc, ret: any) => {
+        const transformed = {
+          id: ret._id,
+          ...ret,
+        };
+
+        delete transformed._id;
+        delete transformed.__v;
+
+        return transformed;
+      },
+    },
+  }
 );
 
 export default mongoose.model<UserDocument>("User", UserSchama);

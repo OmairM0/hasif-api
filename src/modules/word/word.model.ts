@@ -21,7 +21,22 @@ const wordSchema = new Schema<WordDocument>(
       ref: "User",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform: (doc, ret: any) => {
+        const transformed = {
+          id: ret._id,
+          ...ret,
+        };
+
+        delete transformed._id;
+        delete transformed.__v;
+
+        return transformed;
+      },
+    },
+  }
 );
 
 wordSchema.index({ word: 1, diacritic: 1 }, { unique: true });

@@ -10,27 +10,22 @@ const categorySchema = new Schema<CategoryDocument>(
     slug: { type: String, required: true, unique: true },
     description: String,
   },
-  { timestamps: true }
-);
+  {
+    timestamps: true,
+    toJSON: {
+      transform: (doc, ret: any) => {
+        const transformed = {
+          id: ret._id,
+          ...ret,
+        };
 
-categorySchema.pre("save", async function () {
-  if (!this.isModified("name")) return;
+        delete transformed._id;
+        delete transformed.__v;
 
-  let baseSlug = slugify(this.name, {
-    lower: true,
-    strict: true,
-    locale: "ar",
-  });
-  let slug = baseSlug;
-  let count = 1;
-
-  const Category = this.constructor as any;
-
-  while (await Category.exists({ slug })) {
-    slug = `${baseSlug}-${count++}`;
+        return transformed;
+      },
+    },
   }
-
-  this.slug = slug;
-});
+);
 
 export default mongoose.model<CategoryDocument>("Category", categorySchema);

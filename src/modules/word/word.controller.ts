@@ -20,6 +20,7 @@ export const getWords = asyncHandler(async (_req: Request, res: Response) => {
   }));
 
   res.json({
+    success: true,
     count: data.length,
     data,
   });
@@ -40,7 +41,7 @@ export const getWord = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
-  res.json({ word });
+  res.json({ success: true, data: word });
 });
 
 export const createWord = asyncHandler(async (req: Request, res: Response) => {
@@ -58,7 +59,7 @@ export const createWord = asyncHandler(async (req: Request, res: Response) => {
     createdBy: req.user?.id,
   });
 
-  res.json({ success: true, data: { word: createdWord } });
+  res.json({ success: true, data: createdWord });
 });
 
 export const getRandomWord = asyncHandler(
@@ -68,6 +69,7 @@ export const getRandomWord = asyncHandler(
     const word = await Word.findOne().skip(random);
 
     res.json({
+      success: true,
       data: word,
     });
   }
