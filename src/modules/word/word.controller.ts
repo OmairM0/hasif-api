@@ -144,10 +144,14 @@ export const updateWord = asyncHandler(async (req: Request, res: Response) => {
     }
   }
 
-  const updatedWord = await wordModel.findByIdAndUpdate(id, validatedData, {
-    new: true,
-    runValidators: true,
-  });
+  const updatedWord = await wordModel.findByIdAndUpdate(
+    id,
+    { ...validatedData, isApproved: false },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
 
   if (!updatedWord) {
     res.status(404);
