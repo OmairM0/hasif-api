@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 /**
  * API response contract
  * (must match frontend IWord)
@@ -9,7 +11,7 @@ export interface WordDTO {
   meaning: string;
   explanation: string;
   example: string;
-  category: string;
+  category: Types.ObjectId;
   // rarity: number;
 }
 
@@ -18,5 +20,5 @@ export interface WordDTO {
  */
 export interface WordEntity extends WordDTO {
   isApproved: boolean;
-  createdBy?: string;
+  createdBy: Types.ObjectId;
 }

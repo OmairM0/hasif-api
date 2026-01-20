@@ -1,18 +1,24 @@
 import { Router } from "express";
 import {
+  approveWord,
   createWord,
+  deleteWord,
   getRandomWord,
   getWord,
   getWords,
+  updateWord,
 } from "./word.controller";
-import { adminOnly, protect } from "../../middlewares/protect";
+import { adminOnly, optionalAuth, protect } from "../../middlewares/protect";
 
 const router = Router();
 
-router.get("/", getWords);
+router.get("/", optionalAuth, getWords);
 router.post("/", protect, adminOnly, createWord);
 
 router.get("/random", getRandomWord);
 router.get("/:id", getWord);
+router.patch("/:id", protect, updateWord);
+router.delete("/:id", protect, adminOnly, deleteWord);
+router.patch("/:id/approval", protect, adminOnly, approveWord);
 
 export default router;

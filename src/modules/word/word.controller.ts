@@ -1,12 +1,20 @@
 import { Request, Response } from "express";
-import Word from "./word.model";
 import asyncHandler from "../../utils/asyncHandler";
 import { WordDTO } from "./word.types";
 import mongoose from "mongoose";
-import { createWordSchema } from "./word.validation";
+import {
+  approveWordSchema,
+  createWordSchema,
+  updateWordSchema,
+} from "./word.validation";
+import categoryModel from "../category/category.model";
+import wordModel from "./word.model";
 
-export const getWords = asyncHandler(async (_req: Request, res: Response) => {
-  const words = await Word.find({ isApproved: true });
+export const getWords = asyncHandler(async (req: Request, res: Response) => {
+  const isAdmin = req.user?.role === "admin";
+
+  const filter = isAdmin ? {} : { isApproved: true };
+  const words = await wordModel.find(filter);
 
   const data: WordDTO[] = words.map((w) => ({
     id: w.id,
@@ -16,6 +24,7 @@ export const getWords = asyncHandler(async (_req: Request, res: Response) => {
     explanation: w.explanation,
     example: w.example,
     category: w.category,
+    isApproved: w.isApproved,
     // rarity: w.rarity,
   }));
 
@@ -30,43 +39,25 @@ export const getWord = asyncHandler(async (req: Request, res: Response) => {
   const id = req.params.id as string;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(400).json({ message: "Invalid word id" });
-    return;
+    res.status(400);
+    throw new Error("Invalid word id");
   }
 
-  const word = await Word.findById(id);
+  const word = await wordModel.findById(id);
 
   if (!word) {
-    res.status(404).json({ message: "Word not found" });
-    return;
+    res.status(404);
+    throw new Error("Word not found");
   }
 
   res.json({ success: true, data: word });
 });
 
-export const createWord = asyncHandler(async (req: Request, res: Response) => {
-  const validatedData = createWordSchema.parse(req.body);
-
-  // check if word exist
-  const wordExists = await Word.findOne({ word: validatedData.word });
-  if (wordExists) {
-    res.status(409);
-    throw new Error("Word already exists");
-  }
-
-  const createdWord = await Word.create({
-    ...validatedData,
-    createdBy: req.user?.id,
-  });
-
-  res.json({ success: true, data: createdWord });
-});
-
 export const getRandomWord = asyncHandler(
   async (_req: Request, res: Response) => {
-    const count = await Word.countDocuments();
+    const count = await wordModel.countDocuments();
     const random = Math.floor(Math.random() * count);
-    const word = await Word.findOne().skip(random);
+    const word = await wordModel.findOne().skip(random);
 
     res.json({
       success: true,
@@ -74,3 +65,117 @@ export const getRandomWord = asyncHandler(
     });
   }
 );
+
+export const createWord = asyncHandler(async (req: Request, res: Response) => {
+  const validatedData = createWordSchema.parse(req.body);
+
+  // check if category exist
+  const categoryExists = await categoryModel.exists({
+    _id: validatedData.category,
+  });
+  if (!categoryExists) {
+    res.status(400);
+    throw new Error("Category does not exist");
+  }
+
+  // check if word exist
+  const wordExists = await wordModel.findOne({ word: validatedData.word });
+  if (wordExists) {
+    res.status(409);
+    throw new Error("Word already exists");
+  }
+
+  const createdWord = await wordModel.create({
+    ...validatedData,
+    createdBy: req.user?.id,
+  });
+
+  res.json({ success: true, data: createdWord });
+});
+
+export const deleteWord = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400);
+    throw new Error("Invalid word id");
+  }
+
+  const deletedWord = await wordModel.findByIdAndDelete(id);
+
+  if (!deletedWord) {
+    res.status(404);
+    throw new Error("Word not found");
+  }
+
+  res.status(200).json({ success: true });
+});
+
+export const updateWord = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400);
+    throw new Error("Invalid word id");
+  }
+
+  const validatedData = updateWordSchema.parse(req.body);
+
+  // check if category exist
+  if (validatedData.category) {
+    const categoryExists = await categoryModel.exists({
+      _id: validatedData.category,
+    });
+    if (!categoryExists) {
+      res.status(400);
+      throw new Error("Category does not exist");
+    }
+  }
+
+  // check if word already exists (exclude current word)
+  if (validatedData.word) {
+    const wordExists = await wordModel.findOne({
+      word: validatedData.word,
+      _id: { $ne: id },
+    });
+    if (wordExists) {
+      res.status(409);
+      throw new Error("Word already exists");
+    }
+  }
+
+  const updatedWord = await wordModel.findByIdAndUpdate(id, validatedData, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!updatedWord) {
+    res.status(404);
+    throw new Error("Word not found");
+  }
+
+  res.json({ success: true, data: updatedWord });
+});
+
+export const approveWord = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400);
+    throw new Error("Invalid word id");
+  }
+
+  const validatedData = approveWordSchema.parse(req.body);
+
+  const approvedWord = await wordModel.findByIdAndUpdate(id, validatedData, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!approvedWord) {
+    res.status(404);
+    throw new Error("Word not found");
+  }
+
+  res.json({ success: true, data: approvedWord });
+});

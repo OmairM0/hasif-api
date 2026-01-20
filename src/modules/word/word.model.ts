@@ -10,7 +10,12 @@ const wordSchema = new Schema<WordDocument>(
     meaning: { type: String, required: true, trim: true },
     explanation: { type: String, required: true, trim: true },
     example: { type: String, required: true, trim: true },
-    category: { type: String, required: true, trim: true },
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+      trim: true,
+    },
     // rarity: { type: Number, required: true },
 
     // backend-only
