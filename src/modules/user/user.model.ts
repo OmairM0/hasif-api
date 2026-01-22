@@ -32,7 +32,20 @@ const UserSchama = new Schema<UserDocument>(
         return transformed;
       },
     },
-  }
+    toObject: {
+      transform: (doc, ret: any) => {
+        const transformed = {
+          id: ret._id,
+          ...ret,
+        };
+
+        delete transformed._id;
+        delete transformed.__v;
+
+        return transformed;
+      },
+    },
+  },
 );
 
 export default mongoose.model<UserDocument>("User", UserSchama);

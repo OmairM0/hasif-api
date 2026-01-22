@@ -19,22 +19,22 @@ export const getCategories = asyncHandler(
       count: categories.length,
       data: categories,
     });
-  }
+  },
 );
 
 export const getCategory = asyncHandler(async (req: Request, res: Response) => {
   const id = req.params.id as string;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(400).json({ message: "Invalid category id" });
-    return;
+    res.status(400);
+    throw new Error("Invalid category id");
   }
 
   const category = await categoryModel.findById(id);
 
   if (!category) {
-    res.status(404).json({ message: "Category not found" });
-    return;
+    res.status(404);
+    throw new Error("Category not found");
   }
 
   res.json({
@@ -62,7 +62,7 @@ export const createCategory = asyncHandler(
     });
 
     res.json({ success: true, data: createdCategory });
-  }
+  },
 );
 
 export const updateCategory = asyncHandler(
@@ -75,6 +75,10 @@ export const updateCategory = asyncHandler(
     }
 
     const validatedData = updateCategorySchema.parse(req.body);
+    if (Object.keys(validatedData).length === 0) {
+      res.status(400);
+      throw new Error("No data provided for update");
+    }
     let updateData = { ...validatedData } as Partial<Category>;
     // check if word exist
     if (validatedData.name) {
@@ -97,7 +101,7 @@ export const updateCategory = asyncHandler(
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
 
     if (!updatedCategory) {
@@ -106,7 +110,7 @@ export const updateCategory = asyncHandler(
     }
 
     res.json({ success: true, data: updatedCategory });
-  }
+  },
 );
 
 export const deleteCategory = asyncHandler(
@@ -124,7 +128,7 @@ export const deleteCategory = asyncHandler(
     if (hasWords) {
       res.status(400);
       throw new Error(
-        "This category cannot be deleted because it contains associated words"
+        "This category cannot be deleted because it contains associated words",
       );
     }
 
@@ -136,5 +140,5 @@ export const deleteCategory = asyncHandler(
     }
 
     res.status(200).json({ success: true });
-  }
+  },
 );

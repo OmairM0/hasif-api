@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHandler";
-import User from "./user.model";
 import { hashPassword } from "../../utils/hash";
 import { loginService } from "../auth/auth.services";
 import { error } from "node:console";
 import { generateToken } from "../../utils/jwt";
-import { createUserSchema } from "./user.validation";
+import { createUserSchema, updateUserSchema } from "./user.validation";
+import userModel from "./user.model";
+import mongoose from "mongoose";
 
 type CreateAdminBody = {
   email: string;
@@ -29,26 +30,91 @@ type CreateAdminBody = {
 //   });
 // });
 
+export const getUsers = asyncHandler(async (req: Request, res: Response) => {
+  const users = await userModel.find({}, "name email username role").lean();
+
+  const data = users.map((u) => ({
+    id: u._id.toString(),
+    name: u.name,
+    email: u.email,
+    username: u.username,
+    role: u.role,
+  }));
+
+  res.json({
+    success: true,
+    count: users.length,
+    data,
+  });
+});
+
+export const getUser = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400);
+    throw new Error("Invalid user id");
+  }
+
+  const user = await userModel.findById(id, "name email username").lean();
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.json({
+    success: true,
+    data: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      username: user.username,
+    },
+  });
+});
+
+export const getMe = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.user?.id as string;
+
+  const user = await userModel.findById(id, "name email username").lean();
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.json({
+    success: true,
+    data: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      username: user.username,
+    },
+  });
+});
+
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
   const validatedData = createUserSchema.parse(req.body);
 
   const { name, email, username, password } = validatedData;
 
   // 1) check existing
-  const userExists = await User.findOne({
+  const userExists = await userModel.exists({
     $or: [{ email }, { username }],
   });
 
   if (userExists) {
     res.status(409);
-    throw new Error("Email or username already exists");
+    throw new Error("User already exists");
   }
 
   // 2) hash password
   const hashedPassword = await hashPassword(password);
 
   // 3) create user
-  const createdUser = await User.create({
+  const createdUser = await userModel.create({
     name,
     email,
     username,
@@ -73,6 +139,55 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
         role: createdUser.role,
       },
       token,
+    },
+  });
+});
+
+export const updateUser = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.user?.id as string;
+
+  const validatedData = updateUserSchema.parse(req.body);
+
+  if (Object.keys(validatedData).length === 0) {
+    res.status(400);
+    throw new Error("No data provided for update");
+  }
+
+  // check email / username uniqueness (if provided)
+  if (validatedData.email || validatedData.username) {
+    const exists = await userModel.exists({
+      _id: { $ne: id },
+      $or: [
+        validatedData.email ? { email: validatedData.email } : {},
+        validatedData.username ? { username: validatedData.username } : {},
+      ],
+    });
+
+    if (exists) {
+      res.status(409);
+      throw new Error("Email or username already exists");
+    }
+  }
+
+  const updatedUser = await userModel.findByIdAndUpdate(
+    id,
+    { $set: validatedData },
+    { new: true, runValidators: true },
+  );
+
+  if (!updatedUser) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      id: updatedUser._id.toString(),
+      name: updatedUser.name,
+      email: updatedUser.email,
+      username: updatedUser.username,
+      role: updatedUser.role,
     },
   });
 });

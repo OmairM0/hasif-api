@@ -5,5 +5,10 @@ export const createUserSchema = z.object({
   email: z.email(),
   username: z.string().min(4),
   password: z.string().min(6),
-  // role: z.enum(["admin", "user"]),
+});
+
+export const updateUserSchema = z.object({
+  name: z.string().min(2).optional(),
+  email: z.email().optional(),
+  username: z.string().min(3).optional(),
 });

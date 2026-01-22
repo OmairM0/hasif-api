@@ -14,10 +14,30 @@ export const protect = asyncHandler(
 
     const token = authHeader.split(" ")[1];
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-      id: string;
-      role: string;
-    };
+    // const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+    //   id: string;
+    //   role: string;
+    // };
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+        id: string;
+        role: string;
+      };
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        res.status(401);
+        throw new Error("Token expired");
+      } 
+
+      if (error instanceof jwt.JsonWebTokenError) {
+        res.status(401);
+        throw new Error("Invalid token");
+      }
+
+      res.status(401);
+      throw new Error("Authentication failed");
+    }
 
     const user = await userModel.findById(decoded.id).select("role");
 

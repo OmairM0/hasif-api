@@ -63,7 +63,7 @@ export const getRandomWord = asyncHandler(
       success: true,
       data: word,
     });
-  }
+  },
 );
 
 export const createWord = asyncHandler(async (req: Request, res: Response) => {
@@ -121,6 +121,11 @@ export const updateWord = asyncHandler(async (req: Request, res: Response) => {
 
   const validatedData = updateWordSchema.parse(req.body);
 
+  if (Object.keys(validatedData).length === 0) {
+    res.status(400);
+    throw new Error("No data provided for update");
+  }
+
   // check if category exist
   if (validatedData.category) {
     const categoryExists = await categoryModel.exists({
@@ -150,7 +155,7 @@ export const updateWord = asyncHandler(async (req: Request, res: Response) => {
     {
       new: true,
       runValidators: true,
-    }
+    },
   );
 
   if (!updatedWord) {
