@@ -1,10 +1,14 @@
 import { Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHandler";
-import { hashPassword } from "../../utils/hash";
+import { comparePassword, hashPassword } from "../../utils/hash";
 import { loginService } from "../auth/auth.services";
 import { error } from "node:console";
 import { generateToken } from "../../utils/jwt";
-import { createUserSchema, updateUserSchema } from "./user.validation";
+import {
+  changePasswordSchema,
+  createUserSchema,
+  updateUserSchema,
+} from "./user.validation";
 import userModel from "./user.model";
 import mongoose from "mongoose";
 
@@ -191,3 +195,46 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
     },
   });
 });
+
+export const changePassword = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = req.user?.id as string;
+
+    const validatedData = changePasswordSchema.parse(req.body);
+    if (validatedData.oldPassword === validatedData.newPassword) {
+      res.status(400);
+      throw new Error("New password must be different from old password");
+    }
+
+    const user = await userModel.findById(id);
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    const isMatch = await comparePassword(
+      validatedData.oldPassword,
+      user.password,
+    );
+
+    if (!isMatch) {
+      res.status(401);
+      throw new Error("Invalid credentials");
+    }
+
+    user.password = await hashPassword(validatedData.newPassword);
+    await user.save();
+
+    const token = generateToken({
+      id: user._id.toString(),
+      role: user.role,
+    });
+
+    res.json({
+      success: true,
+      message: "Password changed successfully",
+      token,
+    });
+  },
+);
