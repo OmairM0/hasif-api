@@ -9,12 +9,27 @@ import {
 } from "./word.validation";
 import categoryModel from "../category/category.model";
 import wordModel from "./word.model";
+import { getPagination } from "../../utils/pagination";
 
 export const getWords = asyncHandler(async (req: Request, res: Response) => {
   const isAdmin = req.user?.role === "admin";
+  const { page, limit } = req.query;
+
+  const {
+    skip,
+    limit: pageLimit,
+    page: currentPage,
+  } = getPagination({
+    page: Number(page),
+    limit: Number(limit),
+  });
 
   const filter = isAdmin ? {} : { isApproved: true };
-  const words = await wordModel.find(filter);
+  // const words = await wordModel.find(filter);
+  const [words, total] = await Promise.all([
+    wordModel.find(filter).skip(skip).limit(pageLimit),
+    wordModel.countDocuments(),
+  ]);
 
   const data: WordDTO[] = words.map((w) => ({
     id: w.id,
@@ -32,6 +47,14 @@ export const getWords = asyncHandler(async (req: Request, res: Response) => {
     success: true,
     count: data.length,
     data,
+    pagination: {
+      page: currentPage,
+      limit: pageLimit,
+      total,
+      totalPages: Math.ceil(total / pageLimit),
+      hasNext: skip + pageLimit < total,
+      hasPrev: currentPage > 1,
+    },
   });
 });
 
