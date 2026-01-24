@@ -9,15 +9,42 @@ import categoryModel from "./category.model";
 import { makeSlug } from "../../utils/helpers";
 import wordModel from "../word/word.model";
 import { Category } from "./category.types";
+import { getPagination } from "../../utils/pagination";
 
 export const getCategories = asyncHandler(
-  async (_req: Request, res: Response) => {
-    const categories = await categoryModel.find();
+  async (req: Request, res: Response) => {
+    const { page, limit } = req.query;
+    const {
+      skip,
+      limit: pageLimit,
+      page: currentPage,
+    } = getPagination({
+      page: Number(page),
+      limit: Number(limit),
+    });
+
+    const [categories, total] = await Promise.all([
+      categoryModel
+        .find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(pageLimit)
+        .lean(),
+      categoryModel.countDocuments(),
+    ]);
 
     res.json({
       success: true,
       count: categories.length,
       data: categories,
+      pagination: {
+        page: currentPage,
+        limit: pageLimit,
+        total,
+        totalPages: Math.ceil(total / pageLimit),
+        hasNext: skip + pageLimit < total,
+        hasPrev: currentPage > 1,
+      },
     });
   },
 );

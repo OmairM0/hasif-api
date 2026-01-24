@@ -11,6 +11,8 @@ import {
 } from "./user.validation";
 import userModel from "./user.model";
 import mongoose from "mongoose";
+import { getPagination } from "../../utils/pagination";
+import { promise } from "zod";
 
 type CreateAdminBody = {
   email: string;
@@ -35,7 +37,25 @@ type CreateAdminBody = {
 // });
 
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
-  const users = await userModel.find({}, "name email username role").lean();
+  const { page, limit } = req.query;
+  const {
+    skip,
+    limit: pageLimit,
+    page: currentPage,
+  } = getPagination({
+    page: Number(page),
+    limit: Number(limit),
+  });
+
+  const [users, total] = await Promise.all([
+    userModel
+      .find({}, "name email username role")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageLimit)
+      .lean(),
+    userModel.countDocuments(),
+  ]);
 
   const data = users.map((u) => ({
     id: u._id.toString(),
@@ -49,6 +69,14 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
     success: true,
     count: users.length,
     data,
+    pagination: {
+      page: currentPage,
+      limit: pageLimit,
+      total,
+      totalPages: Math.ceil(total / pageLimit),
+      hasNext: skip + pageLimit < total,
+      hasPrev: currentPage > 1,
+    },
   });
 });
 

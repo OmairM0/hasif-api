@@ -25,9 +25,9 @@ export const getWords = asyncHandler(async (req: Request, res: Response) => {
   });
 
   const filter = isAdmin ? {} : { isApproved: true };
-  // const words = await wordModel.find(filter);
+
   const [words, total] = await Promise.all([
-    wordModel.find(filter).skip(skip).limit(pageLimit),
+    wordModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(pageLimit),
     wordModel.countDocuments(),
   ]);
 
