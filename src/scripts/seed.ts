@@ -10,26 +10,47 @@ import path from "path";
 import dotenv from "dotenv";
 import wordsModel from "../modules/word/word.model";
 import { WordEntity, WordDTO } from "../modules/word/word.types";
+import userModel from "../modules/user/user.model";
 
-async function seed() {
+async function seedAdmin() {
   dotenv.config();
   await mongoose.connect(process.env.MONGO_URI!);
 
-  const filePath = path.join(__dirname, "words.json");
-  const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-
-  const readyWords: WordEntity[] = data.map((word: WordDTO) => {
-    return { ...word, isApproved: true, createdBy: null };
+  await userModel.insertOne({
+    name: "عمير محمد",
+    username: "omair",
+    email: "omairm1x@gmail.com",
+    // password: HASHED PASSWORD,
+    role: "admin",
   });
-  // console.log(readyWords[0]);
 
-  await wordsModel.insertMany(data);
-
-  console.log("✅ Words inserted successfully");
+  console.log("✅ Admin inserted successfully");
   process.exit(0);
 }
 
-seed().catch((err) => {
+seedAdmin().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+// async function seed() {
+//   dotenv.config();
+//   await mongoose.connect(process.env.MONGO_URI!);
+
+//   const filePath = path.join(__dirname, "words.json");
+//   const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+
+//   const readyWords: WordEntity[] = data.map((word: WordDTO) => {
+//     return { ...word, isApproved: true, createdBy: null };
+//   });
+//   // console.log(readyWords[0]);
+
+//   await wordsModel.insertMany(data);
+
+//   console.log("✅ Words inserted successfully");
+//   process.exit(0);
+// }
+
+// seed().catch((err) => {
+//   console.error(err);
+//   process.exit(1);
+// });
