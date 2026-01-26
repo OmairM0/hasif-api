@@ -5,9 +5,10 @@ const errorMiddleware = (
   err: any,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
-  let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  // let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  let statusCode = err.statusCode || 500;
   let message = err.message || "Internal Server Error";
   let errors = undefined;
 
