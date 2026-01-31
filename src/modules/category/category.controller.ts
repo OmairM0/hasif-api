@@ -24,12 +24,7 @@ export const getCategories = asyncHandler(
     });
 
     const [categories, total] = await Promise.all([
-      categoryModel
-        .find()
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(pageLimit)
-        .lean(),
+      categoryModel.find().sort({ createdAt: -1 }).skip(skip).limit(pageLimit),
       categoryModel.countDocuments(),
     ]);
 
