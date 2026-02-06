@@ -19,7 +19,11 @@ const wordSchema = new Schema<WordDocument>(
     // rarity: { type: Number, required: true },
 
     // backend-only
-    isApproved: { type: Boolean, default: false },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
     createdBy: {
       required: true,
       type: Schema.Types.ObjectId,
@@ -41,7 +45,7 @@ const wordSchema = new Schema<WordDocument>(
         return transformed;
       },
     },
-  }
+  },
 );
 
 wordSchema.index({ word: 1, diacritic: 1 }, { unique: true });

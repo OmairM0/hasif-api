@@ -18,6 +18,6 @@ export const updateWordSchema = z.object({
   category: z.string().optional(),
 });
 
-export const approveWordSchema = z.object({
-  isApproved: z.boolean(),
+export const changeWordStatusSchema = z.object({
+  status: z.enum(["pending", "approved", "rejected"]),
 });

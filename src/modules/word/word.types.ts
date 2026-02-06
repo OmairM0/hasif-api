@@ -19,6 +19,6 @@ export interface WordDTO {
  * Internal backend entity
  */
 export interface WordEntity extends WordDTO {
-  isApproved: boolean;
+  status: "pending" | "approved" | "rejected";
   createdBy: Types.ObjectId;
 }

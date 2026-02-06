@@ -3,7 +3,7 @@ import asyncHandler from "../../utils/asyncHandler";
 import { WordDTO } from "./word.types";
 import mongoose from "mongoose";
 import {
-  approveWordSchema,
+  changeWordStatusSchema,
   createWordSchema,
   updateWordSchema,
 } from "./word.validation";
@@ -24,11 +24,11 @@ export const getWords = asyncHandler(async (req: Request, res: Response) => {
     limit: Number(limit),
   });
 
-  const filter = isAdmin ? {} : { isApproved: true };
+  const filter = isAdmin ? {} : { status: "approved" };
 
   const [words, total] = await Promise.all([
     wordModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(pageLimit),
-    wordModel.countDocuments(),
+    wordModel.countDocuments(filter),
   ]);
 
   const data: WordDTO[] = words.map((w) => ({
@@ -39,8 +39,7 @@ export const getWords = asyncHandler(async (req: Request, res: Response) => {
     explanation: w.explanation,
     example: w.example,
     category: w.category,
-    isApproved: w.isApproved,
-    // rarity: w.rarity,
+    status: w.status,
   }));
 
   res.json({
@@ -174,7 +173,7 @@ export const updateWord = asyncHandler(async (req: Request, res: Response) => {
 
   const updatedWord = await wordModel.findByIdAndUpdate(
     id,
-    { ...validatedData, isApproved: false },
+    { ...validatedData, status: "pending" },
     {
       new: true,
       runValidators: true,
@@ -189,25 +188,27 @@ export const updateWord = asyncHandler(async (req: Request, res: Response) => {
   res.json({ success: true, data: updatedWord });
 });
 
-export const approveWord = asyncHandler(async (req: Request, res: Response) => {
-  const id = req.params.id as string;
+export const changeWordStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = req.params.id as string;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(400);
-    throw new Error("Invalid word id");
-  }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400);
+      throw new Error("Invalid word id");
+    }
 
-  const validatedData = approveWordSchema.parse(req.body);
+    const validatedData = changeWordStatusSchema.parse(req.body);
 
-  const approvedWord = await wordModel.findByIdAndUpdate(id, validatedData, {
-    new: true,
-    runValidators: true,
-  });
+    const approvedWord = await wordModel.findByIdAndUpdate(id, validatedData, {
+      new: true,
+      runValidators: true,
+    });
 
-  if (!approvedWord) {
-    res.status(404);
-    throw new Error("Word not found");
-  }
+    if (!approvedWord) {
+      res.status(404);
+      throw new Error("Word not found");
+    }
 
-  res.json({ success: true, data: approvedWord });
-});
+    res.json({ success: true, data: approvedWord });
+  },
+);

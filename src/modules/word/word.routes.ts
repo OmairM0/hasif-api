@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-  approveWord,
+  changeWordStatus,
   createWord,
   deleteWord,
   getRandomWord,
@@ -19,6 +19,6 @@ router.get("/random", getRandomWord);
 router.get("/:id", getWord);
 router.patch("/:id", protect, updateWord);
 router.delete("/:id", protect, adminOnly, deleteWord);
-router.patch("/:id/approval", protect, adminOnly, approveWord);
+router.patch("/:id/status", protect, adminOnly, changeWordStatus);
 
 export default router;
