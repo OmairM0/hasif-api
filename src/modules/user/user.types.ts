@@ -4,4 +4,5 @@ export interface User {
   username: string;
   password: string;
   role: "admin" | "user";
+  status: "active" | "inactive";
 }
