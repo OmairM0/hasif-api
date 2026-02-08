@@ -77,9 +77,13 @@ export const getWord = asyncHandler(async (req: Request, res: Response) => {
 
 export const getRandomWord = asyncHandler(
   async (_req: Request, res: Response) => {
-    const count = await wordModel.countDocuments();
+    const count = await wordModel.countDocuments({ status: "approved" });
+    if (count === 0) {
+      res.status(404);
+      throw new Error("No approved words found");
+    }
     const random = Math.floor(Math.random() * count);
-    const word = await wordModel.findOne().skip(random);
+    const word = await wordModel.findOne({ status: "approved" }).skip(random);
 
     res.json({
       success: true,
