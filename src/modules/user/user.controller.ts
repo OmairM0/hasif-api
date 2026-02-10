@@ -109,7 +109,7 @@ export const getUser = asyncHandler(async (req: Request, res: Response) => {
 export const getMe = asyncHandler(async (req: Request, res: Response) => {
   const id = req.user?.id as string;
 
-  const user = await userModel.findById(id, "name email username").lean();
+  const user = await userModel.findById(id, "name email username role").lean();
 
   if (!user) {
     res.status(404);
