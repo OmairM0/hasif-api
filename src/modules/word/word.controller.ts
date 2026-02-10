@@ -13,7 +13,8 @@ import { getPagination } from "../../utils/pagination";
 
 export const getWords = asyncHandler(async (req: Request, res: Response) => {
   const isAdmin = req.user?.role === "admin";
-  const { page, limit } = req.query;
+  const userId = req.user?.id;
+  const { page, limit, scope } = req.query;
 
   const {
     skip,
@@ -24,7 +25,19 @@ export const getWords = asyncHandler(async (req: Request, res: Response) => {
     limit: Number(limit),
   });
 
-  const filter = isAdmin ? {} : { status: "approved" };
+  let filter: Record<string, any> = {};
+  // const filter = isAdmin ? {} : { status: "approved" };
+  if (scope === "me") {
+    if (!userId) {
+      res.status(401);
+      throw new Error("Unauthorized");
+    }
+    filter.createdBy = userId;
+  } else if (isAdmin) {
+    filter = {};
+  } else {
+    filter.status = "approved";
+  }
 
   const [words, total] = await Promise.all([
     wordModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(pageLimit),

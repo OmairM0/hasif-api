@@ -13,7 +13,7 @@ import { adminOnly, optionalAuth, protect } from "../../middlewares/protect";
 const router = Router();
 
 router.get("/", optionalAuth, getWords);
-router.post("/", protect, adminOnly, createWord);
+router.post("/", protect, createWord);
 
 router.get("/random", getRandomWord);
 router.get("/:id", getWord);
