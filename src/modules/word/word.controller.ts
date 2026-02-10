@@ -139,10 +139,27 @@ export const deleteWord = asyncHandler(async (req: Request, res: Response) => {
 
 export const updateWord = asyncHandler(async (req: Request, res: Response) => {
   const id = req.params.id as string;
+  const user = req.user!;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     res.status(400);
     throw new Error("Invalid word id");
+  }
+
+  const word = await wordModel.findById(id);
+
+  if (!word) {
+    res.status(404);
+    throw new Error("Word not found");
+  }
+
+  // AUTHORIZATION CHECK
+  const isAdmin = user.role === "admin";
+  const isOwner = word.createdBy.toString() === user.id;
+
+  if (!isAdmin && !isOwner) {
+    res.status(403);
+    throw new Error("You are not allowed to edit this word");
   }
 
   const validatedData = updateWordSchema.parse(req.body);
