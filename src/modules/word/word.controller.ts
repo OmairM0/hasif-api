@@ -27,7 +27,7 @@ export const getWords = asyncHandler(async (req: Request, res: Response) => {
 
   let filter: Record<string, any> = {};
   // const filter = isAdmin ? {} : { status: "approved" };
-  if (scope === "me") {
+  if (scope === "me" && !isAdmin) {
     if (!userId) {
       res.status(401);
       throw new Error("Unauthorized");
